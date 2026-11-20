@@ -10,13 +10,13 @@ import io.javalin.websocket.WsMessageContext;
 import io.javalin.websocket.WsMessageHandler;
 import model.Pet;
 import org.eclipse.jetty.websocket.api.Session;
-import server.NoiseMaker;
+import server.PetEventObserver;
 import webSocketMessages.Action;
 import webSocketMessages.Notification;
 
 import java.io.IOException;
 
-public class WebSocketHandler implements NoiseMaker, WsConnectHandler, WsMessageHandler, WsCloseHandler {
+public class WebSocketObserver implements PetEventObserver, WsConnectHandler, WsMessageHandler, WsCloseHandler {
 
     private final ConnectionManager connections = new ConnectionManager();
 

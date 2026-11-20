@@ -2,7 +2,7 @@ package remote.websocket;
 
 import com.google.gson.Gson;
 import exception.ResponseException;
-import remote.NotificationHandler;
+import remote.NotificationObserver;
 import webSocketMessages.Action;
 import webSocketMessages.Notification;
 
@@ -16,13 +16,13 @@ import java.net.URISyntaxException;
 public class WebSocketFacade extends Endpoint {
 
     Session session;
-    NotificationHandler notificationHandler;
+    NotificationObserver notificationObserver;
 
-    public WebSocketFacade(String url, NotificationHandler notificationHandler) throws ResponseException {
+    public WebSocketFacade(String url, NotificationObserver notificationObserver) throws ResponseException {
         try {
             url = url.replace("http", "ws");
             URI socketURI = new URI(url + "/ws");
-            this.notificationHandler = notificationHandler;
+            this.notificationObserver = notificationObserver;
 
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             this.session = container.connectToServer(this, socketURI);
@@ -32,7 +32,7 @@ public class WebSocketFacade extends Endpoint {
                 @Override
                 public void onMessage(String message) {
                     Notification notification = new Gson().fromJson(message, Notification.class);
-                    notificationHandler.notify(notification);
+                    notificationObserver.notify(notification);
                 }
             });
         } catch (DeploymentException | IOException | URISyntaxException ex) {

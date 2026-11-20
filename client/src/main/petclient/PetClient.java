@@ -3,20 +3,17 @@ package petclient;
 import com.google.gson.Gson;
 import model.*;
 import exception.ResponseException;
-import remote.NotificationHandler;
+import remote.NotificationObserver;
 import remote.Remote;
-import webSocketMessages.Notification;
 
 public class PetClient {
     private String visitorName = null;
     private final Remote remote;
-    private final PetList pets;
     private State state = State.SIGNEDOUT;
 
 
-    public PetClient(String serverUrl, NotificationHandler notificationHandler) throws ResponseException {
-        remote = new Remote(serverUrl, notificationHandler);
-        pets = remote.listPets();
+    public PetClient(String serverUrl, NotificationObserver notificationObserver) throws ResponseException {
+        remote = new Remote(serverUrl, notificationObserver);
     }
 
     public boolean isSignedIn() {
@@ -35,7 +32,6 @@ public class PetClient {
         String name = params[0];
         PetType type = PetType.valueOf(params[1].toUpperCase());
         var pet = remote.addPet(new Pet(0, name, type));
-        pets.add(pet);
         return String.format("You rescued %s. Assigned ID: %d", pet.name(), pet.id());
     }
 
@@ -43,7 +39,7 @@ public class PetClient {
         assertSignedIn();
         var result = new StringBuilder();
         var gson = new Gson();
-        for (Pet pet : pets) {
+        for (Pet pet : remote.listPets()) {
             result.append(gson.toJson(pet)).append('\n');
         }
         return result.toString();
@@ -65,9 +61,13 @@ public class PetClient {
 
     public String adoptAllPets() throws ResponseException {
         assertSignedIn();
+        var buffer = new StringBuilder();
+        for (Pet pet : remote.listPets()) {
+            buffer.append(String.format("%s says %s%n", pet.name(), pet.sound()));
+        }
 
         remote.deleteAllPets();
-        return "";
+        return buffer.toString();
     }
 
     public String signOut() throws ResponseException {

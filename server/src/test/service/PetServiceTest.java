@@ -6,7 +6,7 @@ import model.Pet;
 import model.PetType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import server.NoiseMaker;
+import server.PetEventObserver;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -75,8 +75,8 @@ class PetServiceTest {
     @Test
     void makeNoise() throws ResponseException {
         StringBuilder noises = new StringBuilder();
-        NoiseMaker noiseMaker = (pet) -> noises.append(pet.sound());
-        var service = new PetService(new MemoryDataAccess(), noiseMaker);
+        PetEventObserver petEventObserver = (pet) -> noises.append(pet.sound());
+        var service = new PetService(new MemoryDataAccess(), petEventObserver);
         service.addPet(new Pet(0, "betty", PetType.DOG));
 
         assertEquals("bark", noises.toString());

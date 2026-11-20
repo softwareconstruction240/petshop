@@ -4,12 +4,12 @@ import java.util.*;
 
 import exception.ResponseException;
 import petclient.PetClient;
-import remote.NotificationHandler;
+import remote.NotificationObserver;
 import webSocketMessages.Notification;
 
 import static petclient.EscapeSequences.*;
 
-public class Repl implements NotificationHandler {
+public class Repl implements NotificationObserver {
     private final PetClient client;
     private final CommandManager commandManager;
     private boolean running = true;

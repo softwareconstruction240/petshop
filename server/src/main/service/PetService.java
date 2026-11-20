@@ -4,18 +4,18 @@ import dataaccess.DataAccess;
 import model.*;
 import exception.ResponseException;
 import model.PetType;
-import server.NoiseMaker;
+import server.PetEventObserver;
 
 import java.util.Collection;
 
 public class PetService {
 
     private final DataAccess dataAccess;
-    private final NoiseMaker noiseMaker;
+    private final PetEventObserver petEventObserver;
 
-    public PetService(DataAccess dataAccess, NoiseMaker noiseMaker) {
+    public PetService(DataAccess dataAccess, PetEventObserver petEventObserver) {
         this.dataAccess = dataAccess;
-        this.noiseMaker = noiseMaker;
+        this.petEventObserver = petEventObserver;
     }
 
     // Pet Shop is very simple.
@@ -26,7 +26,7 @@ public class PetService {
             throw new ResponseException(ResponseException.Code.ClientError, "Error: no dogs with fleas");
         }
 
-        noiseMaker.makeNoise(pet);
+        petEventObserver.makeNoise(pet);
         return dataAccess.addPet(pet);
     }
 
@@ -42,7 +42,7 @@ public class PetService {
     public void deletePet(Pet pet) throws ResponseException {
         validateId(pet.id());
 
-        noiseMaker.makeNoise(pet);
+        petEventObserver.makeNoise(pet);
         dataAccess.deletePet(pet.id());
     }
 

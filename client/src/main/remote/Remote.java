@@ -10,9 +10,9 @@ public class Remote {
     private final ServerFacade server;
     private final WebSocketFacade ws;
 
-    public Remote(String serverUrl, NotificationHandler notificationHandler) throws ResponseException {
+    public Remote(String serverUrl, NotificationObserver notificationObserver) throws ResponseException {
         server = new ServerFacade(serverUrl);
-        ws = new WebSocketFacade(serverUrl, notificationHandler);
+        ws = new WebSocketFacade(serverUrl, notificationObserver);
     }
 
     public void enterPetShop(String visitorName) throws ResponseException {

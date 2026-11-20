@@ -5,14 +5,18 @@ import model.*;
 import exception.ResponseException;
 import remote.NotificationHandler;
 import remote.Remote;
+import webSocketMessages.Notification;
 
 public class PetClient {
     private String visitorName = null;
     private final Remote remote;
+    private final PetList pets;
     private State state = State.SIGNEDOUT;
+
 
     public PetClient(String serverUrl, NotificationHandler notificationHandler) throws ResponseException {
         remote = new Remote(serverUrl, notificationHandler);
+        pets = remote.listPets();
     }
 
     public boolean isSignedIn() {
@@ -31,12 +35,12 @@ public class PetClient {
         String name = params[0];
         PetType type = PetType.valueOf(params[1].toUpperCase());
         var pet = remote.addPet(new Pet(0, name, type));
+        pets.add(pet);
         return String.format("You rescued %s. Assigned ID: %d", pet.name(), pet.id());
     }
 
     public String listPets() throws ResponseException {
         assertSignedIn();
-        PetList pets = remote.listPets();
         var result = new StringBuilder();
         var gson = new Gson();
         for (Pet pet : pets) {
@@ -61,13 +65,9 @@ public class PetClient {
 
     public String adoptAllPets() throws ResponseException {
         assertSignedIn();
-        var buffer = new StringBuilder();
-        for (Pet pet : remote.listPets()) {
-            buffer.append(String.format("%s says %s%n", pet.name(), pet.sound()));
-        }
 
         remote.deleteAllPets();
-        return buffer.toString();
+        return "";
     }
 
     public String signOut() throws ResponseException {
@@ -91,4 +91,5 @@ public class PetClient {
             throw new ResponseException(ResponseException.Code.ClientError, "You must sign in");
         }
     }
+
 }

@@ -1,4 +1,4 @@
-package client;
+package petclient;
 
 public class EscapeSequences {
     private static final String ESCAPE = "\u001b[";

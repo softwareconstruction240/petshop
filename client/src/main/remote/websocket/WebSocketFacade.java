@@ -1,7 +1,8 @@
-package client.websocket;
+package remote.websocket;
 
 import com.google.gson.Gson;
 import exception.ResponseException;
+import remote.NotificationHandler;
 import webSocketMessages.Action;
 import webSocketMessages.Notification;
 

@@ -1,4 +1,4 @@
-package client.websocket;
+package remote;
 
 import webSocketMessages.Notification;
 

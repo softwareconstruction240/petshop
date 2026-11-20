@@ -1,4 +1,4 @@
-package client;
+package petclient;
 
 public enum State {
     SIGNEDOUT,

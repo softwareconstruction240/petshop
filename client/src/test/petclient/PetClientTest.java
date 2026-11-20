@@ -1,4 +1,4 @@
-package client;
+package petclient;
 
 import dataaccess.MemoryDataAccess;
 import exception.ResponseException;
@@ -20,7 +20,7 @@ class PetClientTest {
         petServer = new PetServer(new MemoryDataAccess());
         petServer.run(0);
         var url = "http://localhost:" + petServer.port();
-        client = new PetClient(url);
+        client = new PetClient(url, notification -> {});
         client.signIn("tester");
     }
 

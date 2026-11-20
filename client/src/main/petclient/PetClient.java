@@ -1,7 +1,5 @@
 package petclient;
 
-import java.util.Arrays;
-
 import com.google.gson.Gson;
 import model.*;
 import exception.ResponseException;
@@ -17,46 +15,23 @@ public class PetClient {
         remote = new Remote(serverUrl, notificationHandler);
     }
 
-    public String eval(String input) {
-        try {
-            String[] tokens = input.toLowerCase().split(" ");
-            String cmd = (tokens.length > 0) ? tokens[0] : "help";
-            String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
-            return switch (cmd) {
-                case "signin" -> signIn(params);
-                case "rescue" -> rescuePet(params);
-                case "list" -> listPets();
-                case "signout" -> signOut();
-                case "adopt" -> adoptPet(params);
-                case "adoptall" -> adoptAllPets();
-                case "quit" -> "quit";
-                default -> help();
-            };
-        } catch (ResponseException ex) {
-            return ex.getMessage();
-        }
+    public boolean isSignedIn() {
+        return state == State.SIGNEDIN;
     }
 
     public String signIn(String... params) throws ResponseException {
-        if (params.length >= 1) {
-            state = State.SIGNEDIN;
-            visitorName = String.join("-", params);
-            remote.enterPetShop(visitorName);
-            return String.format("You signed in as %s.", visitorName);
-        }
-        throw new ResponseException(ResponseException.Code.ClientError, "Expected: <yourname>");
+        visitorName = String.join("-", params);
+        state = State.SIGNEDIN;
+        remote.enterPetShop(visitorName);
+        return String.format("You signed in as %s.", visitorName);
     }
 
     public String rescuePet(String... params) throws ResponseException {
         assertSignedIn();
-        if (params.length >= 2) {
-            String name = params[0];
-            PetType type = PetType.valueOf(params[1].toUpperCase());
-            var pet = new Pet(0, name, type);
-            pet = remote.addPet(pet);
-            return String.format("You rescued %s. Assigned ID: %d", pet.name(), pet.id());
-        }
-        throw new ResponseException(ResponseException.Code.ClientError, "Expected: <name> <CAT|DOG|FROG>");
+        String name = params[0];
+        PetType type = PetType.valueOf(params[1].toUpperCase());
+        var pet = remote.addPet(new Pet(0, name, type));
+        return String.format("You rescued %s. Assigned ID: %d", pet.name(), pet.id());
     }
 
     public String listPets() throws ResponseException {
@@ -72,16 +47,14 @@ public class PetClient {
 
     public String adoptPet(String... params) throws ResponseException {
         assertSignedIn();
-        if (params.length == 1) {
-            try {
-                int id = Integer.parseInt(params[0]);
-                Pet pet = getPet(id);
-                if (pet != null) {
-                    remote.deletePet(id);
-                    return String.format("%s says %s", pet.name(), pet.sound());
-                }
-            } catch (NumberFormatException ignored) {
+        try {
+            int id = Integer.parseInt(params[0]);
+            Pet pet = getPet(id);
+            if (pet != null) {
+                remote.deletePet(id);
+                return String.format("%s says %s", pet.name(), pet.sound());
             }
+        } catch (NumberFormatException ignored) {
         }
         throw new ResponseException(ResponseException.Code.ClientError, "Expected: <pet id>");
     }
@@ -111,23 +84,6 @@ public class PetClient {
             }
         }
         return null;
-    }
-
-    public String help() {
-        if (state == State.SIGNEDOUT) {
-            return """
-                    - signIn <yourname>
-                    - quit
-                    """;
-        }
-        return """
-                - list
-                - adopt <pet id>
-                - rescue <name> <CAT|DOG|FROG|FISH>
-                - adoptAll
-                - signOut
-                - quit
-                """;
     }
 
     private void assertSignedIn() throws ResponseException {

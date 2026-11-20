@@ -6,18 +6,15 @@ import com.google.gson.Gson;
 import model.*;
 import exception.ResponseException;
 import remote.NotificationHandler;
-import server.ServerFacade;
-import remote.websocket.WebSocketFacade;
+import remote.Remote;
 
 public class PetClient {
     private String visitorName = null;
-    private final ServerFacade server;
-    private final WebSocketFacade ws;
+    private final Remote remote;
     private State state = State.SIGNEDOUT;
 
     public PetClient(String serverUrl, NotificationHandler notificationHandler) throws ResponseException {
-        server = new ServerFacade(serverUrl);
-        ws = new WebSocketFacade(serverUrl, notificationHandler);
+        remote = new Remote(serverUrl, notificationHandler);
     }
 
     public String eval(String input) {
@@ -44,7 +41,7 @@ public class PetClient {
         if (params.length >= 1) {
             state = State.SIGNEDIN;
             visitorName = String.join("-", params);
-            ws.enterPetShop(visitorName);
+            remote.enterPetShop(visitorName);
             return String.format("You signed in as %s.", visitorName);
         }
         throw new ResponseException(ResponseException.Code.ClientError, "Expected: <yourname>");
@@ -56,7 +53,7 @@ public class PetClient {
             String name = params[0];
             PetType type = PetType.valueOf(params[1].toUpperCase());
             var pet = new Pet(0, name, type);
-            pet = server.addPet(pet);
+            pet = remote.addPet(pet);
             return String.format("You rescued %s. Assigned ID: %d", pet.name(), pet.id());
         }
         throw new ResponseException(ResponseException.Code.ClientError, "Expected: <name> <CAT|DOG|FROG>");
@@ -64,7 +61,7 @@ public class PetClient {
 
     public String listPets() throws ResponseException {
         assertSignedIn();
-        PetList pets = server.listPets();
+        PetList pets = remote.listPets();
         var result = new StringBuilder();
         var gson = new Gson();
         for (Pet pet : pets) {
@@ -80,7 +77,7 @@ public class PetClient {
                 int id = Integer.parseInt(params[0]);
                 Pet pet = getPet(id);
                 if (pet != null) {
-                    server.deletePet(id);
+                    remote.deletePet(id);
                     return String.format("%s says %s", pet.name(), pet.sound());
                 }
             } catch (NumberFormatException ignored) {
@@ -92,23 +89,23 @@ public class PetClient {
     public String adoptAllPets() throws ResponseException {
         assertSignedIn();
         var buffer = new StringBuilder();
-        for (Pet pet : server.listPets()) {
+        for (Pet pet : remote.listPets()) {
             buffer.append(String.format("%s says %s%n", pet.name(), pet.sound()));
         }
 
-        server.deleteAllPets();
+        remote.deleteAllPets();
         return buffer.toString();
     }
 
     public String signOut() throws ResponseException {
         assertSignedIn();
-        ws.leavePetShop(visitorName);
+        remote.leavePetShop(visitorName);
         state = State.SIGNEDOUT;
         return String.format("%s left the shop", visitorName);
     }
 
     private Pet getPet(int id) throws ResponseException {
-        for (Pet pet : server.listPets()) {
+        for (Pet pet : remote.listPets()) {
             if (pet.id() == id) {
                 return pet;
             }

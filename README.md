@@ -28,7 +28,7 @@ It is important to note that each layer only communicates with its adjacent laye
 
 | Layer          | Implemented By            | Description                                                    |
 | -------------- | ------------------------- | -------------------------------------------------------------- |
-| **Client**     | PetClient                 | Interacts with users and sends requests to the server.         |
+| **Client**     | Repl, PetClient, Remote   | Interacts with users and sends requests to the server.         |
 | **Network**    | PetServer                 | Converts HTTP requests into Java objects.                      |
 | **Service**    | PetService                | Performs validation and implements application business logic. |
 | **DataAccess** | DataAccess (Memory/MySQL) | Converts Java objects into database operations.                |
@@ -40,18 +40,23 @@ It is important to note that each layer only communicates with its adjacent laye
 
 The client is invoked by the **ClientMain** class when handling user requests, or by the **PetClientTest** when executing unit tests.
 
-The **PetClient** controls the REPL (Read, Execute, Print, Loop) interaction with the user. It also sends requests to the server using both HTTP and WebSocket network protocols.
+The **Repl** controls the REPL (Read, Execute, Print, Loop) interaction with the user. It reads a line of input, parses it into a command and its parameters, validates the parameter count against a command map, and prints help when the syntax is wrong or the command is unknown. Each recognized command is dispatched to the **PetClient**.
 
-**PetClient** implements the **NotificationHandler** interface, which allows the **WebSocketFacade** to pass received messages to the **PetClient** for display to the user.
+**Repl** implements the **NotificationHandler** interface, which allows the **WebSocketFacade** to pass received messages to the **Repl** for display to the user.
+
+The **PetClient** implements each command without concerning itself with parsing user input. It delegates all server communication to the **Remote**, which encapsulates the HTTP (**ServerFacade**) and WebSocket (**WebSocketFacade**) network protocols.
 
 ```mermaid
 %%{init: { 'theme': 'neutral', 'themeVariables': { 'lineColor': '#000000', 'primaryTextColor': '#000000', 'actorBorder': '#000000', 'participantBorder': '#000000', 'noteBorderColor': '#000000' } }}%%
 
 classDiagram
-    PetClient--|> NotificationHandler
-    PetClient o-- ServerFacade
-    PetClient o-- WebSocketFacade
-    WebSocketFacade-->NotificationHandler
+    ClientMain --> Repl
+    Repl --|> NotificationHandler
+    Repl o-- PetClient
+    PetClient o-- Remote
+    Remote o-- ServerFacade
+    Remote o-- WebSocketFacade
+    WebSocketFacade --> NotificationHandler
 ```
 
 ### Server

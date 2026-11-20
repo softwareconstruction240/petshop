@@ -18,10 +18,6 @@ The Pet Shop application demonstrates the topics presented in this course and se
 >
 > You can use Pet Shop as inspiration for your chess application, but ensure you **fully understand the code** before reusing any part of it. Many representations are simplified and will not directly translate to the requirements of the chess application.
 
-## Source Code
-
-The [Pet Shop source code](https://github.com/softwareconstruction240/softwareconstruction/tree/main/petshop) is found in the course instruction repository you are currently viewing. If you haven't already cloned the repository to your development environment, you should do so now. You can then open the IntelliJ Pet Shop project to study, run, and debug the code.
-
 ## Architecture
 
 The following diagram illustrates the different components that make up the Pet Shop application. This includes all layers, starting from the client interface down to the data persisted in the database.
@@ -30,13 +26,13 @@ The following diagram illustrates the different components that make up the Pet 
 
 It is important to note that each layer only communicates with its adjacent layers. For example, the Client layer does not directly communicate with the Service or DataAccess layers. This level of abstraction decouples the components and makes the application easier to understand and maintain.
 
-| Layer          | Implemented By            | Description                                                      |
-| -------------- | ------------------------- | ---------------------------------------------------------------- |
-| **Client**     | PetClient                 | Interacts with users and sends requests to the server.           |
-| **Network**    | PetServer                 | Converts HTTP requests into Java objects.                        |
-| **Service**    | PetService                | Performs validation and implements application business logic.   |
-| **DataAccess** | DataAccess (Memory/MySQL) | Converts Java objects into database operations.                  |
-| **Database**   | MySQL                     | Persists application objects.                                    |
+| Layer          | Implemented By            | Description                                                    |
+| -------------- | ------------------------- | -------------------------------------------------------------- |
+| **Client**     | PetClient                 | Interacts with users and sends requests to the server.         |
+| **Network**    | PetServer                 | Converts HTTP requests into Java objects.                      |
+| **Service**    | PetService                | Performs validation and implements application business logic. |
+| **DataAccess** | DataAccess (Memory/MySQL) | Converts Java objects into database operations.                |
+| **Database**   | MySQL                     | Persists application objects.                                  |
 
 ## Class Diagrams
 

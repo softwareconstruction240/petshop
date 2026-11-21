@@ -4,6 +4,8 @@ import dataaccess.DataAccess;
 import model.*;
 import exception.ResponseException;
 
+import java.util.List;
+
 public class PetService {
 
     private final DataAccess dataAccess;
@@ -48,8 +50,18 @@ public class PetService {
         return pet;
     }
 
-    public void adoptAllPets() throws ResponseException {
+    /**
+     * Adopts each pet individually so that every adoption is announced. Only the pets present
+     * when this starts are adopted; one rescued meanwhile stays in the shop rather than being
+     * removed without notice.
+     */
+    public List<Pet> adoptAllPets() throws ResponseException {
+        PetList pets = dataAccess.listPets();
         dataAccess.deleteAllPets();
+        for (Pet pet : pets) {
+            petEventObserver.petAdopted(pet);
+        }
+        return pets;
     }
 
     private void validatePet(Pet pet) throws ResponseException {

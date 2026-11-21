@@ -71,12 +71,19 @@ class PetServiceTest {
 
     @Test
     void adoptAllPets() throws ResponseException {
-        service.rescuePet(new Pet(0, "joe", PetType.FISH));
-        service.rescuePet(new Pet(0, "sally", PetType.CAT));
-        service.rescuePet(new Pet(0, "fido", PetType.DOG));
+        Pet joe = service.rescuePet(new Pet(0, "joe", PetType.FISH));
+        Pet sally = service.rescuePet(new Pet(0, "sally", PetType.CAT));
+        Pet fido = service.rescuePet(new Pet(0, "fido", PetType.DOG));
 
-        service.adoptAllPets();
+        assertEquals(List.of(joe, sally, fido), service.adoptAllPets());
         assertEquals(0, service.listPets().size());
+        assertEquals(List.of(joe, sally, fido), events.adopted);
+    }
+
+    @Test
+    void adoptAllWithNoPetsSendsNoEvents() throws ResponseException {
+        assertTrue(service.adoptAllPets().isEmpty());
+        assertTrue(events.adopted.isEmpty());
     }
 
     @Test

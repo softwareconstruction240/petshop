@@ -19,7 +19,7 @@ public class ConsoleView implements NotificationObserver {
     }
 
     public void welcome() {
-        print(LOGO + YELLOW + " Welcome to the pet store." + RESET + " SignIn <yourname> or ask for help.\n");
+        print(LOGO + YELLOW + " Welcome to the pet shop." + RESET + " SignIn <yourname> or ask for help.\n");
         printPrompt(RESET, "");
     }
 
@@ -41,16 +41,16 @@ public class ConsoleView implements NotificationObserver {
 
     @Override
     public void notify(Notification notification) {
-        print("\n" + BLUE + "<<< " + notification.message());
-        print("\n" + RESET + ">>> ");
+        print(YELLOW + "< " + notification.message());
+        print("\n" + RESET + "> ");
     }
 
     private void printPrompt(String color, String message) {
         print(color + message);
-        print("\n" + RESET + ">>> ");
+        print("\n" + RESET + "> ");
     }
 
-    // Synchronized so we don't overlay messages from notifications
+    // Synchronized so we don't interleave messages from notifications
     private synchronized void print(String msg) {
         out.print(msg);
     }

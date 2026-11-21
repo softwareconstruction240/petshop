@@ -2,11 +2,13 @@ package petclient;
 
 import dataaccess.MemoryDataAccess;
 import exception.ResponseException;
+import model.Pet;
+import model.PetType;
 import org.junit.jupiter.api.*;
+import remote.RemoteGateway;
 import server.PetServer;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -21,7 +23,7 @@ class PetClientTest {
         petServer.run(0);
         var url = "http://localhost:" + petServer.port();
 
-        client = new PetClient(url, notification -> {});
+        client = new PetClient(new RemoteGateway(url, notification -> {}));
         client.signIn("tester");
     }
 
@@ -37,63 +39,46 @@ class PetClientTest {
 
     @Test
     void rescuePet() {
-        String result = assertDoesNotThrow(() -> client.rescuePet("joe", "fish"));
-        assertMatches("You rescued joe. Assigned ID: \\d+", result);
+        Pet joe = assertDoesNotThrow(() -> client.rescuePet("joe", PetType.FISH));
+        assertEquals("joe", joe.name());
+        assertEquals(PetType.FISH, joe.type());
 
-        result = assertDoesNotThrow(() -> client.rescuePet("sally", "cat"));
-        assertMatches("You rescued sally. Assigned ID: \\d+", result);
+        Pet sally = assertDoesNotThrow(() -> client.rescuePet("sally", PetType.CAT));
+        assertEquals("sally", sally.name());
+        assertNotEquals(joe.id(), sally.id());
     }
 
     @Test
     void adoptPet() throws Exception {
-        String id = getId(client.rescuePet("joe", "frog"));
-        client.rescuePet("sally", "cat");
+        Pet joe = client.rescuePet("joe", PetType.FROG);
+        Pet sally = client.rescuePet("sally", PetType.CAT);
 
-        String result = assertDoesNotThrow(() -> client.adoptPet(id));
-        assertEquals("joe says ribbit", result);
+        Pet adopted = assertDoesNotThrow(() -> client.adoptPet(joe.id()));
+        assertEquals(joe, adopted);
+        assertEquals(List.of(sally), client.listPets());
     }
-
 
     @Test
     void adoptAllPets() throws Exception {
-        client.rescuePet("joe", "rock");
-        client.rescuePet("pat", "cat");
-        String result = assertDoesNotThrow(() -> client.adoptAllPets());
-        assertEquals("joe says roll\npat says meow\n", result);
-        assertEquals("", client.listPets());
+        Pet joe = client.rescuePet("joe", PetType.ROCK);
+        Pet pat = client.rescuePet("pat", PetType.CAT);
+
+        List<Pet> adopted = assertDoesNotThrow(() -> client.adoptAllPets());
+        assertEquals(List.of(joe, pat), adopted);
+        assertTrue(client.listPets().isEmpty());
     }
 
     @Test
-    void deleteNonexistentPet() {
-        assertThrows(ResponseException.class, () -> client.adoptPet("933432"));
+    void adoptNonexistentPet() {
+        assertThrows(ResponseException.class, () -> client.adoptPet(933432));
     }
-
 
     @Test
-    void listPet() {
-        assertDoesNotThrow(() -> client.rescuePet("joe", "fish"));
-        assertDoesNotThrow(() -> client.rescuePet("sally", "fish"));
+    void listPets() throws Exception {
+        Pet joe = client.rescuePet("joe", PetType.FISH);
+        Pet sally = client.rescuePet("sally", PetType.FISH);
 
-        String result = assertDoesNotThrow(() -> client.listPets());
-        assertMatches("""
-                \\{'id':\\d+,'name':'joe','type':'FISH'}
-                \\{'id':\\d+,'name':'sally','type':'FISH'}
-                """, result);
-    }
-
-    private void assertMatches(String expected, String actual) {
-        actual = actual.replace('"', '\'');
-
-        assertTrue(actual.matches(expected), actual + "\n" + expected);
-    }
-
-    private static String getId(String text) {
-        Pattern p = Pattern.compile("ID: (\\d+)");
-        Matcher m = p.matcher(text);
-        if (m.find()) {
-            return m.group(1);
-        }
-        fail("ID not found");
-        return "";
+        List<Pet> pets = assertDoesNotThrow(() -> client.listPets());
+        assertEquals(List.of(joe, sally), pets);
     }
 }

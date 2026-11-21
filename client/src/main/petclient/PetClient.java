@@ -1,80 +1,66 @@
 package petclient;
 
-import com.google.gson.Gson;
 import model.*;
 import exception.ResponseException;
-import remote.NotificationObserver;
-import remote.Remote;
+import remote.PetShopGateway;
+
+import java.util.List;
 
 public class PetClient {
     private String visitorName = null;
-    private final Remote remote;
+    private final PetShopGateway remote;
     private State state = State.SIGNEDOUT;
 
 
-    public PetClient(String serverUrl, NotificationObserver notificationObserver) throws ResponseException {
-        remote = new Remote(serverUrl, notificationObserver);
+    public PetClient(PetShopGateway remote) {
+        this.remote = remote;
     }
 
     public boolean isSignedIn() {
         return state == State.SIGNEDIN;
     }
 
-    public String signIn(String... params) throws ResponseException {
-        visitorName = String.join("-", params);
+    public String getVisitorName() {
+        return visitorName;
+    }
+
+    public void signIn(String visitorName) throws ResponseException {
         remote.enterPetShop(visitorName);
+        this.visitorName = visitorName;
         state = State.SIGNEDIN;
-        return String.format("You signed in as %s.", visitorName);
     }
 
-    public String rescuePet(String... params) throws ResponseException {
+    public Pet rescuePet(String name, PetType type) throws ResponseException {
         assertSignedIn();
-        String name = params[0];
-        PetType type = PetType.valueOf(params[1].toUpperCase());
-        var pet = remote.addPet(new Pet(0, name, type));
-        return String.format("You rescued %s. Assigned ID: %d", pet.name(), pet.id());
+        return remote.addPet(new Pet(0, name, type));
     }
 
-    public String listPets() throws ResponseException {
+    public List<Pet> listPets() throws ResponseException {
         assertSignedIn();
-        var result = new StringBuilder();
-        var gson = new Gson();
-        for (Pet pet : remote.listPets()) {
-            result.append(gson.toJson(pet)).append('\n');
+        return remote.listPets();
+    }
+
+    public Pet adoptPet(int id) throws ResponseException {
+        assertSignedIn();
+        Pet pet = getPet(id);
+        if (pet == null) {
+            throw new ResponseException(ResponseException.Code.ClientError, String.format("Pet %d not found", id));
         }
-        return result.toString();
+        remote.deletePet(id);
+        return pet;
     }
 
-    public String adoptPet(String... params) throws ResponseException {
+    public List<Pet> adoptAllPets() throws ResponseException {
         assertSignedIn();
-        try {
-            int id = Integer.parseInt(params[0]);
-            Pet pet = getPet(id);
-            if (pet != null) {
-                remote.deletePet(id);
-                return String.format("%s says %s", pet.name(), pet.sound());
-            }
-        } catch (NumberFormatException ignored) {
-        }
-        throw new ResponseException(ResponseException.Code.ClientError, "Expected: <pet id>");
-    }
-
-    public String adoptAllPets() throws ResponseException {
-        assertSignedIn();
-        var buffer = new StringBuilder();
-        for (Pet pet : remote.listPets()) {
-            buffer.append(String.format("%s says %s%n", pet.name(), pet.sound()));
-        }
-
+        List<Pet> pets = remote.listPets();
         remote.deleteAllPets();
-        return buffer.toString();
+        return pets;
     }
 
-    public String signOut() throws ResponseException {
+    public void signOut() throws ResponseException {
         assertSignedIn();
         remote.leavePetShop(visitorName);
         state = State.SIGNEDOUT;
-        return String.format("%s left the shop", visitorName);
     }
 
     private Pet getPet(int id) throws ResponseException {

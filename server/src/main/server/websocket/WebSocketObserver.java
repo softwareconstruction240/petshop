@@ -8,7 +8,7 @@ import io.javalin.websocket.WsConnectHandler;
 import io.javalin.websocket.WsMessageContext;
 import io.javalin.websocket.WsMessageHandler;
 import model.Pet;
-import server.PetEventObserver;
+import service.PetEventObserver;
 import webSocketMessages.Action;
 import webSocketMessages.Notification;
 
@@ -64,9 +64,16 @@ public class WebSocketObserver implements PetEventObserver, WsConnectHandler, Ws
     }
 
     @Override
-    public void makeNoise(Pet pet) {
-        var message = String.format("%s says %s", pet.name(), pet.sound());
-        var notification = new Notification(Notification.Type.NOISE, message);
-        connections.broadcastAll(notification);
+    public void petAdded(Pet pet) {
+        makeNoise(String.format("%s was rescued and says %s", pet.name(), pet.sound()));
+    }
+
+    @Override
+    public void petAdopted(Pet pet) {
+        makeNoise(String.format("%s was adopted and says %s", pet.name(), pet.sound()));
+    }
+
+    private void makeNoise(String message) {
+        connections.broadcastAll(new Notification(Notification.Type.NOISE, message));
     }
 }

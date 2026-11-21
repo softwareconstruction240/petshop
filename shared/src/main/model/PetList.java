@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class PetList extends ArrayList<Pet> {
+    private static final Gson GSON = new Gson();
+
     public PetList() {
 
     }
@@ -14,7 +16,11 @@ public class PetList extends ArrayList<Pet> {
         super(pets);
     }
 
+    public String toJson() {
+        return GSON.toJson(this.toArray());
+    }
+
     public String toString() {
-        return new Gson().toJson(this.toArray());
+        return toJson();
     }
 }

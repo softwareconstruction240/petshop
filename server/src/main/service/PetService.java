@@ -4,9 +4,6 @@ import dataaccess.DataAccess;
 import model.*;
 import exception.ResponseException;
 import model.PetType;
-import server.PetEventObserver;
-
-import java.util.Collection;
 
 public class PetService {
 
@@ -22,12 +19,13 @@ public class PetService {
     // A more complicated application would do the business logic in the service.
 
     public Pet addPet(Pet pet) throws ResponseException {
+        validatePet(pet);
         if (pet.type() == PetType.DOG && pet.name().equals("fleas")) {
             throw new ResponseException(ResponseException.Code.ClientError, "Error: no dogs with fleas");
         }
 
         Pet added = dataAccess.addPet(pet);
-        petEventObserver.makeNoise(added);
+        petEventObserver.petAdded(added);
         return added;
     }
 
@@ -37,20 +35,33 @@ public class PetService {
 
     public Pet getPet(int id) throws ResponseException {
         validateId(id);
-        return dataAccess.getPet(id);
+        Pet pet = dataAccess.getPet(id);
+        if (pet == null) {
+            throw new ResponseException(ResponseException.Code.NotFound, String.format("Error: pet %d not found", id));
+        }
+        return pet;
     }
 
-    public void deletePet(Pet pet) throws ResponseException {
-        validateId(pet.id());
-
-        dataAccess.deletePet(pet.id());
-        petEventObserver.makeNoise(pet);
+    public Pet deletePet(int id) throws ResponseException {
+        Pet pet = getPet(id);
+        dataAccess.deletePet(id);
+        petEventObserver.petAdopted(pet);
+        return pet;
     }
 
     public void deleteAllPets() throws ResponseException {
-        Collection<Pet> pets = dataAccess.listPets();
-        if (!pets.isEmpty()) {
-            dataAccess.deleteAllPets();
+        dataAccess.deleteAllPets();
+    }
+
+    private void validatePet(Pet pet) throws ResponseException {
+        if (pet == null) {
+            throw new ResponseException(ResponseException.Code.ClientError, "Error: missing pet");
+        }
+        if (pet.name() == null || pet.name().isBlank()) {
+            throw new ResponseException(ResponseException.Code.ClientError, "Error: pet name is required");
+        }
+        if (pet.type() == null) {
+            throw new ResponseException(ResponseException.Code.ClientError, "Error: pet type is required");
         }
     }
 

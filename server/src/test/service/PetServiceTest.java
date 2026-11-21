@@ -6,7 +6,6 @@ import model.Pet;
 import model.PetType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import server.PetEventObserver;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -15,12 +14,13 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PetServiceTest {
-    static final PetService service = new PetService(new MemoryDataAccess(), (pet) -> {
-    });
+    private RecordingObserver events;
+    private PetService service;
 
     @BeforeEach
-    void clear() throws ResponseException {
-        service.deleteAllPets();
+    void setUp() {
+        events = new RecordingObserver();
+        service = new PetService(new MemoryDataAccess(), events);
     }
 
     @Test
@@ -51,9 +51,22 @@ class PetServiceTest {
         expected.add(service.addPet(new Pet(0, "sally", PetType.CAT)));
         expected.add(service.addPet(new Pet(0, "fido", PetType.DOG)));
 
-        service.deletePet(pet);
+        assertEquals(pet, service.deletePet(pet.id()));
         Collection<Pet> actual = service.listPets();
         assertIterableEquals(expected, actual);
+    }
+
+    @Test
+    void deleteUnknownPet() {
+        var ex = assertThrows(ResponseException.class, () -> service.deletePet(999));
+        assertEquals(ResponseException.Code.NotFound, ex.code());
+        assertTrue(events.adopted.isEmpty());
+    }
+
+    @Test
+    void deleteInvalidId() {
+        var ex = assertThrows(ResponseException.class, () -> service.deletePet(0));
+        assertEquals(ResponseException.Code.ClientError, ex.code());
     }
 
     @Test
@@ -70,15 +83,39 @@ class PetServiceTest {
     void noDogsWithFleas() {
         assertThrows(ResponseException.class, () ->
                 service.addPet(new Pet(0, "fleas", PetType.DOG)));
+        assertTrue(events.added.isEmpty());
     }
 
     @Test
-    void makeNoise() throws ResponseException {
-        StringBuilder noises = new StringBuilder();
-        PetEventObserver petEventObserver = (pet) -> noises.append(pet.sound());
-        var service = new PetService(new MemoryDataAccess(), petEventObserver);
-        service.addPet(new Pet(0, "betty", PetType.DOG));
+    void invalidPetsRejected() {
+        for (Pet pet : new Pet[]{null, new Pet(0, null, PetType.CAT), new Pet(0, " ", PetType.CAT), new Pet(0, "joe", null)}) {
+            var ex = assertThrows(ResponseException.class, () -> service.addPet(pet));
+            assertEquals(ResponseException.Code.ClientError, ex.code());
+        }
+        assertTrue(events.added.isEmpty());
+    }
 
-        assertEquals("bark", noises.toString());
+    @Test
+    void eventsReportWhatHappened() throws ResponseException {
+        Pet betty = service.addPet(new Pet(0, "betty", PetType.DOG));
+        service.deletePet(betty.id());
+
+        assertEquals(List.of(betty), events.added);
+        assertEquals(List.of(betty), events.adopted);
+    }
+
+    private static class RecordingObserver implements PetEventObserver {
+        final List<Pet> added = new ArrayList<>();
+        final List<Pet> adopted = new ArrayList<>();
+
+        @Override
+        public void petAdded(Pet pet) {
+            added.add(pet);
+        }
+
+        @Override
+        public void petAdopted(Pet pet) {
+            adopted.add(pet);
+        }
     }
 }

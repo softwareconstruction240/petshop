@@ -10,6 +10,7 @@ public class ResponseException extends Exception {
     public enum Code {
         ServerError,
         ClientError,
+        NotFound,
     }
 
     final private Code code;
@@ -35,17 +36,20 @@ public class ResponseException extends Exception {
     }
 
     public static Code fromHttpStatusCode(int httpStatusCode) {
-        return switch (httpStatusCode) {
-            case 500 -> Code.ServerError;
-            case 400 -> Code.ClientError;
-            default -> throw new IllegalArgumentException("Unknown HTTP status code: " + httpStatusCode);
-        };
+        if (httpStatusCode == 404) {
+            return Code.NotFound;
+        }
+        if (httpStatusCode >= 400 && httpStatusCode < 500) {
+            return Code.ClientError;
+        }
+        return Code.ServerError;
     }
 
     public int toHttpStatusCode() {
         return switch (code) {
             case ServerError -> 500;
             case ClientError -> 400;
+            case NotFound -> 404;
         };
     }
 }

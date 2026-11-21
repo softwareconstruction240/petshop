@@ -70,6 +70,12 @@ class PetServerTest {
         Assertions.assertEquals("Error: no dogs with fleas", error.getMessage());
     }
 
+    @Test
+    void deleteNonexistentPet() {
+        ResponseException error = assertThrows(ResponseException.class, () -> server.deletePet(933432));
+        assertEquals(ResponseException.Code.NotFound, error.code());
+    }
+
     public static void assertPetEqual(Pet expected, Pet actual) {
         assertEquals(expected.name(), actual.name());
         assertEquals(expected.type(), actual.type());

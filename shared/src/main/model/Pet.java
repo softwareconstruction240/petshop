@@ -3,6 +3,7 @@ package model;
 import com.google.gson.*;
 
 public record Pet(int id, String name, PetType type) {
+    private static final Gson GSON = new Gson();
 
     public String sound() {
         return switch (type) {
@@ -20,7 +21,11 @@ public record Pet(int id, String name, PetType type) {
         return new Pet(id, this.name, this.type);
     }
 
+    public String toJson() {
+        return GSON.toJson(this);
+    }
+
     public String toString() {
-        return new Gson().toJson(this);
+        return toJson();
     }
 }

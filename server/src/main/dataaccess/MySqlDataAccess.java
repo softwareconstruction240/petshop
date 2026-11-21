@@ -5,6 +5,8 @@ import exception.ResponseException;
 import model.*;
 
 import java.sql.*;
+import java.util.Arrays;
+import java.util.stream.Collectors;
 
 import static java.sql.Statement.RETURN_GENERATED_KEYS;
 import static java.sql.Types.NULL;
@@ -98,18 +100,23 @@ public class MySqlDataAccess implements DataAccess {
         }
     }
 
+    // The ENUM values come from PetType so the schema can't fall out of sync with the model.
+    private static final String PET_TYPE_VALUES = Arrays.stream(PetType.values())
+            .map(type -> "'" + type.name() + "'")
+            .collect(Collectors.joining(", "));
+
     private final String[] createStatements = {
             """
             CREATE TABLE IF NOT EXISTS  pet (
               `id` int NOT NULL AUTO_INCREMENT,
               `name` varchar(256) NOT NULL,
-              `type` ENUM('CAT', 'DOG', 'FISH', 'FROG', 'ROCK') DEFAULT 'CAT',
+              `type` ENUM(%s) DEFAULT 'CAT',
               `json` TEXT DEFAULT NULL,
               PRIMARY KEY (`id`),
               INDEX(type),
               INDEX(name)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-            """
+            """.formatted(PET_TYPE_VALUES)
     };
 
 

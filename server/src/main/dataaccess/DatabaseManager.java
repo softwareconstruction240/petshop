@@ -9,8 +9,6 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Properties;
 
-import static java.sql.Statement.RETURN_GENERATED_KEYS;
-
 public class DatabaseManager {
     private static final String databaseName;
     private static final String user;
@@ -43,12 +41,10 @@ public class DatabaseManager {
      * Creates the database if it does not already exist.
      */
     static void createDatabase() throws ResponseException {
-        try {
-            String statement = "CREATE DATABASE IF NOT EXISTS " + databaseName;
-            Connection conn = DriverManager.getConnection(connectionUrl, user, password);
-            try (PreparedStatement preparedStatement = conn.prepareStatement(statement, RETURN_GENERATED_KEYS)) {
-                preparedStatement.executeUpdate();
-            }
+        String statement = "CREATE DATABASE IF NOT EXISTS " + databaseName;
+        try (Connection conn = DriverManager.getConnection(connectionUrl, user, password);
+             PreparedStatement preparedStatement = conn.prepareStatement(statement)) {
+            preparedStatement.executeUpdate();
         } catch (SQLException e) {
             throw new ResponseException(ResponseException.Code.ServerError, e.getMessage());
         }

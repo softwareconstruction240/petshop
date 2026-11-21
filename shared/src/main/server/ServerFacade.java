@@ -33,7 +33,8 @@ public class ServerFacade {
 
     public void deleteAllPets() throws ResponseException {
         var request = buildRequest("DELETE", "/pet", null);
-        sendRequest(request);
+        var response = sendRequest(request);
+        handleResponse(response, null);
     }
 
     public PetList listPets() throws ResponseException {
@@ -71,12 +72,7 @@ public class ServerFacade {
     private <T> T handleResponse(HttpResponse<String> response, Class<T> responseClass) throws ResponseException {
         var status = response.statusCode();
         if (!isSuccessful(status)) {
-            var body = response.body();
-            if (body != null) {
-                throw ResponseException.fromJson(body);
-            }
-
-            throw new ResponseException(ResponseException.fromHttpStatusCode(status), "other failure: " + status);
+            throw errorFrom(response);
         }
 
         if (responseClass != null) {
@@ -84,6 +80,19 @@ public class ServerFacade {
         }
 
         return null;
+    }
+
+    /**
+     * Prefer the server's JSON error. Fall back to the status code when the body is
+     * empty or isn't one of our errors (for example, a proxy's HTML error page).
+     */
+    private ResponseException errorFrom(HttpResponse<String> response) {
+        var status = response.statusCode();
+        try {
+            return ResponseException.fromJson(response.body());
+        } catch (RuntimeException ignored) {
+            return new ResponseException(ResponseException.fromHttpStatusCode(status), "other failure: " + status);
+        }
     }
 
     private boolean isSuccessful(int status) {

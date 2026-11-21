@@ -22,8 +22,8 @@ public class PetClient {
 
     public String signIn(String... params) throws ResponseException {
         visitorName = String.join("-", params);
-        state = State.SIGNEDIN;
         remote.enterPetShop(visitorName);
+        state = State.SIGNEDIN;
         return String.format("You signed in as %s.", visitorName);
     }
 

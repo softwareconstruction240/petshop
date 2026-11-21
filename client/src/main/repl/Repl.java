@@ -38,14 +38,15 @@ public class Repl implements NotificationObserver {
 
     public void eval(String input) {
         try {
-            String[] tokens = input.toLowerCase().split(" ");
-            String name = (tokens.length > 0) ? tokens[0] : "";
+            String[] tokens = input.trim().split("\\s+");
+            String name = (tokens.length > 0) ? tokens[0].toLowerCase() : "";
             String[] params = Arrays.copyOfRange(tokens, 1, tokens.length);
             var command = commandManager.get(name);
             if (params.length < command.requiredParams()) {
                 printPrompt(BLUE, command.usage());
+            } else {
+                printPrompt(GREEN, command.handler().run(params));
             }
-            printPrompt(GREEN, command.handler().run(params));
         } catch (ResponseException ex) {
             printPrompt(RED, ex.getMessage());
         }
@@ -55,7 +56,7 @@ public class Repl implements NotificationObserver {
         printPrompt(GREEN, notification.message());
     }
 
-    private void printPrompt(String color, String message) {
+    synchronized private void printPrompt(String color, String message) {
         System.out.print(color + message);
         System.out.print("\n" + RESET + ">>> " + GREEN);
     }

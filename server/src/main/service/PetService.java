@@ -3,7 +3,6 @@ package service;
 import dataaccess.DataAccess;
 import model.*;
 import exception.ResponseException;
-import model.PetType;
 
 public class PetService {
 

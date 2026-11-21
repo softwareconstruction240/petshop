@@ -41,7 +41,8 @@ public class ConsoleView implements NotificationObserver {
 
     @Override
     public void notify(Notification notification) {
-        printPrompt(GREEN, notification.message());
+        out.print("\n" + BLUE + "<<< " + notification.message());
+        out.print("\n" + RESET + ">>> " + GREEN);
     }
 
     private synchronized void printPrompt(String color, String message) {

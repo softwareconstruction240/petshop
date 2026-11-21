@@ -27,8 +27,8 @@ public class WebSocketFacade extends Endpoint {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             this.session = container.connectToServer(this, socketURI);
 
-            //set message handler
-            this.session.addMessageHandler((MessageHandler.Whole<String>) message -> {
+            // Set incoming message handler
+            this.session.addMessageHandler(String.class, message -> {
                 Notification notification = new Gson().fromJson(message, Notification.class);
                 notificationObserver.notify(notification);
             });

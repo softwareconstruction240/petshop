@@ -151,8 +151,7 @@ public class Repl {
             if (!client.isSignedIn()) {
                 return """
                         - signIn <yourname>
-                        - quit
-                        """;
+                        - quit""";
             }
             return """
                     - list
@@ -160,8 +159,7 @@ public class Repl {
                     - rescue <name> <%s>
                     - adoptAll
                     - signOut
-                    - quit
-                    """.formatted(PET_TYPES);
+                    - quit""".formatted(PET_TYPES);
         }
     }
 }

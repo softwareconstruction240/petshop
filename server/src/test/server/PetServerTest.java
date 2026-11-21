@@ -27,23 +27,23 @@ class PetServerTest {
 
     @BeforeEach
     void clear() {
-        assertDoesNotThrow(() -> server.deleteAllPets());
+        assertDoesNotThrow(() -> server.adoptAllPets());
     }
 
     @Test
-    void addPet() {
+    void rescuePet() {
         var joe = new Pet(0, "joe", PetType.CAT);
-        Pet result = assertDoesNotThrow(() -> server.addPet(joe));
+        Pet result = assertDoesNotThrow(() -> server.rescuePet(joe));
         assertPetEqual(joe, result);
     }
 
     @Test
-    void deletePet() throws Exception {
+    void adoptPet() throws Exception {
         var expected = new PetList();
-        expected.add(server.addPet(new Pet(0, "sally", PetType.CAT)));
+        expected.add(server.rescuePet(new Pet(0, "sally", PetType.CAT)));
 
-        Pet joe = server.addPet(new Pet(0, "joe", PetType.CAT));
-        server.deletePet(joe.id());
+        Pet joe = server.rescuePet(new Pet(0, "joe", PetType.CAT));
+        server.adoptPet(joe.id());
 
         PetList result = assertDoesNotThrow(() -> server.listPets());
         assertPetCollectionEqual(expected, result);
@@ -52,18 +52,18 @@ class PetServerTest {
     @Test
     void listPets() throws Exception {
         var expected = new PetList();
-        expected.add(server.addPet(new Pet(0, "joe", PetType.CAT)));
-        expected.add(server.addPet(new Pet(0, "sally", PetType.CAT)));
+        expected.add(server.rescuePet(new Pet(0, "joe", PetType.CAT)));
+        expected.add(server.rescuePet(new Pet(0, "sally", PetType.CAT)));
 
         var result = assertDoesNotThrow(() -> server.listPets());
         assertPetCollectionEqual(expected, result);
     }
 
     @Test
-    void invalidPetAddition() {
+    void invalidPetRescue() {
         // Dogs with fleas are not allowed
         ResponseException error = Assertions.assertThrows(ResponseException.class,
-                () -> server.addPet(new Pet(-1, "fleas", PetType.DOG)),
+                () -> server.rescuePet(new Pet(-1, "fleas", PetType.DOG)),
                 "Inserting an invalid pet should throw an error");
 
         Assertions.assertEquals(ResponseException.Code.ClientError, error.code());
@@ -71,8 +71,8 @@ class PetServerTest {
     }
 
     @Test
-    void deleteNonexistentPet() {
-        ResponseException error = assertThrows(ResponseException.class, () -> server.deletePet(933432));
+    void adoptNonexistentPet() {
+        ResponseException error = assertThrows(ResponseException.class, () -> server.adoptPet(933432));
         assertEquals(ResponseException.Code.NotFound, error.code());
     }
 

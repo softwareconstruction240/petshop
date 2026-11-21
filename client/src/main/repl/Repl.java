@@ -63,7 +63,7 @@ public class Repl {
         public CommandManager() {
             commands.put("signin", new Command(1, "Expected: <yourname>", this::signIn));
             commands.put("rescue", new Command(2, "Expected: <name> <" + PET_TYPES + ">", this::rescue));
-            commands.put("adopt", new Command(1, "Expected: <pet id>", this::adopt));
+            commands.put("adopt", new Command(1, "Expected: <pet list position>", this::adopt));
             commands.put("list", new Command(0, "", params -> list()));
             commands.put("adoptall", new Command(0, "", params -> adoptAll()));
             commands.put("signout", new Command(0, "", params -> signOut()));
@@ -85,7 +85,7 @@ public class Repl {
         }
 
         private String adopt(String[] params) throws ResponseException {
-            Pet pet = client.adoptPet(parsePetId(params[0]));
+            Pet pet = client.adoptPet(parsePosition(params[0]));
             return formatAdoption(pet);
         }
 
@@ -117,14 +117,14 @@ public class Repl {
         }
 
         private static String formatAdoption(Pet pet) {
-            return String.format("%s says %s", pet.name(), pet.sound());
+            return String.format("applying to adopt %s", pet.name());
         }
 
-        private static int parsePetId(String text) throws ResponseException {
+        private static int parsePosition(String text) throws ResponseException {
             try {
                 return Integer.parseInt(text);
             } catch (NumberFormatException ex) {
-                throw new ResponseException(ResponseException.Code.ClientError, "Expected: <pet id>");
+                throw new ResponseException(ResponseException.Code.ClientError, "Expected: <pet list position>");
             }
         }
 

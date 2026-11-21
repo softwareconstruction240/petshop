@@ -30,8 +30,8 @@ public class RemoteGateway implements PetShopGateway {
     }
 
     @Override
-    public Pet addPet(Pet pet) throws ResponseException {
-        return server.addPet(pet);
+    public Pet rescuePet(Pet pet) throws ResponseException {
+        return server.rescuePet(pet);
     }
 
     @Override
@@ -40,12 +40,12 @@ public class RemoteGateway implements PetShopGateway {
     }
 
     @Override
-    public void deletePet(int id) throws ResponseException {
-        server.deletePet(id);
+    public void adoptPet(Pet pet) throws ResponseException {
+        server.adoptPet(pet.id());
     }
 
     @Override
-    public void deleteAllPets() throws ResponseException {
-        server.deleteAllPets();
+    public void adoptAllPets() throws ResponseException {
+        server.adoptAllPets();
     }
 }

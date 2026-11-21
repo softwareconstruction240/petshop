@@ -10,6 +10,7 @@ public class PetClient {
     private String visitorName = null;
     private final PetShopGateway remote;
     private State state = State.SIGNEDOUT;
+    private List<Pet> listedPets = List.of();
 
 
     public PetClient(PetShopGateway remote) {
@@ -32,28 +33,51 @@ public class PetClient {
 
     public Pet rescuePet(String name, PetType type) throws ResponseException {
         assertSignedIn();
-        return remote.addPet(new Pet(0, name, type));
+        return remote.rescuePet(new Pet(0, name, type));
     }
 
+    /**
+     * Returns the current pets and remembers them, so that adoptPet can refer to a pet
+     * by its position in the list the user was shown.
+     */
     public List<Pet> listPets() throws ResponseException {
         assertSignedIn();
-        return remote.listPets();
+        listedPets = List.copyOf(remote.listPets());
+        return listedPets;
     }
 
-    public Pet adoptPet(int id) throws ResponseException {
+    /**
+     * Adopts the pet at the given 1-based position in the most recent listPets result.
+     * The remembered list isn't changed by adopting, so positions keep matching what the
+     * user saw until they list again.
+     */
+    public Pet adoptPet(int position) throws ResponseException {
         assertSignedIn();
-        Pet pet = getPet(id);
-        if (pet == null) {
-            throw new ResponseException(ResponseException.Code.ClientError, String.format("Pet %d not found", id));
+        if (listedPets.isEmpty()) {
+            throw new ResponseException(ResponseException.Code.ClientError, "List the pets before adopting one");
         }
-        remote.deletePet(id);
+        if (position < 1 || position > listedPets.size()) {
+            throw new ResponseException(ResponseException.Code.ClientError, "Pet position must match something in the list");
+        }
+
+        Pet pet = listedPets.get(position - 1);
+        try {
+            remote.adoptPet(pet);
+        } catch (ResponseException ex) {
+            if (ex.code() == ResponseException.Code.NotFound) {
+                throw new ResponseException(ResponseException.Code.ClientError,
+                        String.format("%s has already been adopted", pet.name()));
+            }
+            throw ex;
+        }
         return pet;
     }
 
     public List<Pet> adoptAllPets() throws ResponseException {
         assertSignedIn();
         List<Pet> pets = remote.listPets();
-        remote.deleteAllPets();
+        remote.adoptAllPets();
+        listedPets = List.of();
         return pets;
     }
 
@@ -61,15 +85,7 @@ public class PetClient {
         assertSignedIn();
         remote.leavePetShop(visitorName);
         state = State.SIGNEDOUT;
-    }
-
-    private Pet getPet(int id) throws ResponseException {
-        for (Pet pet : remote.listPets()) {
-            if (pet.id() == id) {
-                return pet;
-            }
-        }
-        return null;
+        listedPets = List.of();
     }
 
     private void assertSignedIn() throws ResponseException {

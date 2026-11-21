@@ -36,7 +36,7 @@ public class ConsoleView implements NotificationObserver {
     }
 
     public void goodbye() {
-        print(YELLOW + "\nGoodbye!\n" + RESET);
+        print(GREEN + "\nGoodbye!\n" + RESET);
     }
 
     @Override

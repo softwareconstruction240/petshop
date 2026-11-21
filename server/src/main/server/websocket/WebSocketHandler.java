@@ -64,7 +64,7 @@ public class WebSocketHandler implements PetEventObserver, WsConnectHandler, WsM
     }
 
     @Override
-    public void petAdded(Pet pet) {
+    public void petRescued(Pet pet) {
         makeNoise(String.format("%s was rescued and says %s", pet.name(), pet.sound()));
     }
 

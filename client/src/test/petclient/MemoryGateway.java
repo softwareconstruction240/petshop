@@ -1,5 +1,6 @@
 package petclient;
 
+import exception.ResponseException;
 import model.Pet;
 import remote.PetShopGateway;
 
@@ -27,10 +28,10 @@ class MemoryGateway implements PetShopGateway {
     }
 
     @Override
-    public Pet addPet(Pet pet) {
-        Pet added = pet.setId(nextId++);
-        pets.put(added.id(), added);
-        return added;
+    public Pet rescuePet(Pet pet) {
+        Pet rescued = pet.setId(nextId++);
+        pets.put(rescued.id(), rescued);
+        return rescued;
     }
 
     @Override
@@ -39,12 +40,14 @@ class MemoryGateway implements PetShopGateway {
     }
 
     @Override
-    public void deletePet(int id) {
-        pets.remove(id);
+    public void adoptPet(Pet pet) throws ResponseException {
+        if (pets.remove(pet.id()) == null) {
+            throw new ResponseException(ResponseException.Code.NotFound, "Error: pet " + pet.id() + " not found");
+        }
     }
 
     @Override
-    public void deleteAllPets() {
+    public void adoptAllPets() {
         pets.clear();
     }
 }

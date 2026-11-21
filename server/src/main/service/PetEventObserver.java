@@ -10,7 +10,7 @@ import model.Pet;
  * Events describe what happened, not how to react. Each observer decides what to do.
  */
 public interface PetEventObserver {
-    void petAdded(Pet pet);
+    void petRescued(Pet pet);
 
     void petAdopted(Pet pet);
 }

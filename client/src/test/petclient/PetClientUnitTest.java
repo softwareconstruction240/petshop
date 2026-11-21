@@ -57,18 +57,56 @@ class PetClientUnitTest {
         Pet joe = client.rescuePet("joe", PetType.FROG);
         Pet sally = client.rescuePet("sally", PetType.CAT);
 
-        assertEquals(joe, client.adoptPet(joe.id()));
+        client.listPets();
+        assertEquals(joe, client.adoptPet(1));
         assertEquals(List.of(sally), client.listPets());
     }
 
     @Test
-    void adoptUnknownPetFails() throws Exception {
+    void positionsMatchListShownUntilListedAgain() throws Exception {
+        client.signIn("tester");
+        Pet joe = client.rescuePet("joe", PetType.FROG);
+        Pet sally = client.rescuePet("sally", PetType.CAT);
+
+        client.listPets();
+        assertEquals(joe, client.adoptPet(1));
+        assertEquals(sally, client.adoptPet(2));
+        assertTrue(gateway.pets.isEmpty());
+    }
+
+    @Test
+    void adoptBeforeListingFails() throws Exception {
         client.signIn("tester");
         client.rescuePet("joe", PetType.FROG);
 
-        var ex = assertThrows(ResponseException.class, () -> client.adoptPet(999));
+        var ex = assertThrows(ResponseException.class, () -> client.adoptPet(1));
         assertEquals(ResponseException.Code.ClientError, ex.code());
         assertEquals(1, gateway.pets.size());
+    }
+
+    @Test
+    void adoptOutOfRangePositionFails() throws Exception {
+        client.signIn("tester");
+        client.rescuePet("joe", PetType.FROG);
+        client.listPets();
+
+        for (int position : new int[]{0, 2, -1}) {
+            var ex = assertThrows(ResponseException.class, () -> client.adoptPet(position));
+            assertEquals(ResponseException.Code.ClientError, ex.code());
+        }
+        assertEquals(1, gateway.pets.size());
+    }
+
+    @Test
+    void adoptAlreadyAdoptedPetFails() throws Exception {
+        client.signIn("tester");
+        client.rescuePet("joe", PetType.FROG);
+        client.listPets();
+        client.adoptPet(1);
+
+        var ex = assertThrows(ResponseException.class, () -> client.adoptPet(1));
+        assertEquals(ResponseException.Code.ClientError, ex.code());
+        assertEquals("joe has already been adopted", ex.getMessage());
     }
 
     @Test

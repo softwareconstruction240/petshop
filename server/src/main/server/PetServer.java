@@ -31,10 +31,10 @@ public class PetServer {
         service = new PetService(dataAccess, webSocketHandler);
 
         httpHandler = Javalin.create(config -> config.staticFiles.add("public"))
-                .post("/pet", this::addPet)
+                .post("/pet", this::rescuePet)
                 .get("/pet", this::listPets)
-                .delete("/pet/{id}", this::deletePet)
-                .delete("/pet", this::deleteAllPets)
+                .delete("/pet/{petId}", this::adoptPet)
+                .delete("/pet", this::adoptAllPets)
                 .exception(ResponseException.class, this::exceptionHandler)
                 .exception(Exception.class, this::unexpectedExceptionHandler)
                 .ws("/ws", ws -> {
@@ -85,22 +85,22 @@ public class PetServer {
         ctx.contentType(ContentType.APPLICATION_JSON).result(json);
     }
 
-    private void addPet(Context ctx) throws ResponseException {
+    private void rescuePet(Context ctx) throws ResponseException {
         Pet pet = parseBody(ctx, Pet.class);
-        sendJson(ctx, service.addPet(pet).toJson());
+        sendJson(ctx, service.rescuePet(pet).toJson());
     }
 
     private void listPets(Context ctx) throws ResponseException {
         sendJson(ctx, service.listPets().toJson());
     }
 
-    private void deletePet(Context ctx) throws ResponseException {
-        service.deletePet(parseId(ctx.pathParam("id")));
+    private void adoptPet(Context ctx) throws ResponseException {
+        service.adoptPet(parsePetId(ctx.pathParam("petId")));
         ctx.status(204);
     }
 
-    private void deleteAllPets(Context ctx) throws ResponseException {
-        service.deleteAllPets();
+    private void adoptAllPets(Context ctx) throws ResponseException {
+        service.adoptAllPets();
         ctx.status(204);
     }
 
@@ -114,7 +114,7 @@ public class PetServer {
         }
     }
 
-    private static int parseId(String text) throws ResponseException {
+    private static int parsePetId(String text) throws ResponseException {
         try {
             return Integer.parseInt(text);
         } catch (NumberFormatException ex) {

@@ -14,11 +14,11 @@ public interface PetShopGateway {
 
     void leavePetShop(String visitorName) throws ResponseException;
 
-    Pet addPet(Pet pet) throws ResponseException;
+    Pet rescuePet(Pet pet) throws ResponseException;
 
     List<Pet> listPets() throws ResponseException;
 
-    void deletePet(int id) throws ResponseException;
+    void adoptPet(Pet pet) throws ResponseException;
 
-    void deleteAllPets() throws ResponseException;
+    void adoptAllPets() throws ResponseException;
 }

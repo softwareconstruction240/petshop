@@ -7,6 +7,7 @@ import model.PetType;
 import org.junit.jupiter.api.*;
 import remote.RemoteGateway;
 import server.PetServer;
+import server.ServerFacade;
 
 import java.util.List;
 
@@ -16,12 +17,13 @@ class PetClientTest {
 
     static private PetServer petServer;
     static PetClient client;
+    static String url;
 
     @BeforeAll
     static void startServer() throws Exception {
         petServer = new PetServer(new MemoryDataAccess());
         petServer.run(0);
-        var url = "http://localhost:" + petServer.port();
+        url = "http://localhost:" + petServer.port();
 
         client = new PetClient(new RemoteGateway(url, notification -> {}));
         client.signIn("tester");
@@ -53,7 +55,8 @@ class PetClientTest {
         Pet joe = client.rescuePet("joe", PetType.FROG);
         Pet sally = client.rescuePet("sally", PetType.CAT);
 
-        Pet adopted = assertDoesNotThrow(() -> client.adoptPet(joe.id()));
+        client.listPets();
+        Pet adopted = assertDoesNotThrow(() -> client.adoptPet(1));
         assertEquals(joe, adopted);
         assertEquals(List.of(sally), client.listPets());
     }
@@ -69,8 +72,21 @@ class PetClientTest {
     }
 
     @Test
-    void adoptNonexistentPet() {
+    void adoptNonexistentPet() throws Exception {
+        client.rescuePet("joe", PetType.FROG);
+        client.listPets();
         assertThrows(ResponseException.class, () -> client.adoptPet(933432));
+    }
+
+    @Test
+    void adoptPetAdoptedByServerFails() throws Exception {
+        Pet joe = client.rescuePet("joe", PetType.FROG);
+        client.listPets();
+        // Remove the pet behind the client's back, as another visitor would.
+        new ServerFacade(url).adoptPet(joe.id());
+
+        var ex = assertThrows(ResponseException.class, () -> client.adoptPet(1));
+        assertEquals("joe has already been adopted", ex.getMessage());
     }
 
     @Test

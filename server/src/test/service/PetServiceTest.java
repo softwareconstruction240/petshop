@@ -24,9 +24,9 @@ class PetServiceTest {
     }
 
     @Test
-    void addPet() throws ResponseException {
+    void rescuePet() throws ResponseException {
         var pet = new Pet(0, "joe", PetType.FISH);
-        pet = service.addPet(pet);
+        pet = service.rescuePet(pet);
 
         Collection<Pet> pets = service.listPets();
         assertEquals(1, pets.size());
@@ -36,81 +36,81 @@ class PetServiceTest {
     @Test
     void listPets() throws ResponseException {
         List<Pet> expected = new ArrayList<>();
-        expected.add(service.addPet(new Pet(0, "joe", PetType.FISH)));
-        expected.add(service.addPet(new Pet(0, "sally", PetType.CAT)));
-        expected.add(service.addPet(new Pet(0, "fido", PetType.DOG)));
+        expected.add(service.rescuePet(new Pet(0, "joe", PetType.FISH)));
+        expected.add(service.rescuePet(new Pet(0, "sally", PetType.CAT)));
+        expected.add(service.rescuePet(new Pet(0, "fido", PetType.DOG)));
 
         Collection<Pet> actual = service.listPets();
         assertIterableEquals(expected, actual);
     }
 
     @Test
-    void deletePet() throws ResponseException {
+    void adoptPet() throws ResponseException {
         List<Pet> expected = new ArrayList<>();
-        Pet pet = service.addPet(new Pet(0, "joe", PetType.FISH));
-        expected.add(service.addPet(new Pet(0, "sally", PetType.CAT)));
-        expected.add(service.addPet(new Pet(0, "fido", PetType.DOG)));
+        Pet pet = service.rescuePet(new Pet(0, "joe", PetType.FISH));
+        expected.add(service.rescuePet(new Pet(0, "sally", PetType.CAT)));
+        expected.add(service.rescuePet(new Pet(0, "fido", PetType.DOG)));
 
-        assertEquals(pet, service.deletePet(pet.id()));
+        assertEquals(pet, service.adoptPet(pet.id()));
         Collection<Pet> actual = service.listPets();
         assertIterableEquals(expected, actual);
     }
 
     @Test
-    void deleteUnknownPet() {
-        var ex = assertThrows(ResponseException.class, () -> service.deletePet(999));
+    void adoptUnknownPet() {
+        var ex = assertThrows(ResponseException.class, () -> service.adoptPet(999));
         assertEquals(ResponseException.Code.NotFound, ex.code());
         assertTrue(events.adopted.isEmpty());
     }
 
     @Test
-    void deleteInvalidId() {
-        var ex = assertThrows(ResponseException.class, () -> service.deletePet(0));
+    void adoptInvalidPetId() {
+        var ex = assertThrows(ResponseException.class, () -> service.adoptPet(0));
         assertEquals(ResponseException.Code.ClientError, ex.code());
     }
 
     @Test
-    void deleteAllPets() throws ResponseException {
-        service.addPet(new Pet(0, "joe", PetType.FISH));
-        service.addPet(new Pet(0, "sally", PetType.CAT));
-        service.addPet(new Pet(0, "fido", PetType.DOG));
+    void adoptAllPets() throws ResponseException {
+        service.rescuePet(new Pet(0, "joe", PetType.FISH));
+        service.rescuePet(new Pet(0, "sally", PetType.CAT));
+        service.rescuePet(new Pet(0, "fido", PetType.DOG));
 
-        service.deleteAllPets();
+        service.adoptAllPets();
         assertEquals(0, service.listPets().size());
     }
 
     @Test
     void noDogsWithFleas() {
         assertThrows(ResponseException.class, () ->
-                service.addPet(new Pet(0, "fleas", PetType.DOG)));
-        assertTrue(events.added.isEmpty());
+                service.rescuePet(new Pet(0, "fleas", PetType.DOG)));
+        assertTrue(events.rescued.isEmpty());
     }
 
     @Test
     void invalidPetsRejected() {
         for (Pet pet : new Pet[]{null, new Pet(0, null, PetType.CAT), new Pet(0, " ", PetType.CAT), new Pet(0, "joe", null)}) {
-            var ex = assertThrows(ResponseException.class, () -> service.addPet(pet));
+            var ex = assertThrows(ResponseException.class, () -> service.rescuePet(pet));
             assertEquals(ResponseException.Code.ClientError, ex.code());
         }
-        assertTrue(events.added.isEmpty());
+        assertTrue(events.rescued.isEmpty());
     }
 
     @Test
     void eventsReportWhatHappened() throws ResponseException {
-        Pet betty = service.addPet(new Pet(0, "betty", PetType.DOG));
-        service.deletePet(betty.id());
+        Pet betty = service.rescuePet(new Pet(0, "betty", PetType.DOG));
+        service.adoptPet(betty.id());
 
-        assertEquals(List.of(betty), events.added);
+        assertEquals(List.of(betty), events.rescued);
         assertEquals(List.of(betty), events.adopted);
     }
 
     private static class RecordingObserver implements PetEventObserver {
-        final List<Pet> added = new ArrayList<>();
+        final List<Pet> rescued = new ArrayList<>();
         final List<Pet> adopted = new ArrayList<>();
 
         @Override
-        public void petAdded(Pet pet) {
-            added.add(pet);
+        public void petRescued(Pet pet) {
+            rescued.add(pet);
         }
 
         @Override

@@ -18,20 +18,20 @@ public class ServerFacade {
         serverUrl = url;
     }
 
-    public Pet addPet(Pet pet) throws ResponseException {
+    public Pet rescuePet(Pet pet) throws ResponseException {
         var request = buildRequest("POST", "/pet", pet);
         var response = sendRequest(request);
         return handleResponse(response, Pet.class);
     }
 
-    public void deletePet(int id) throws ResponseException {
-        var path = String.format("/pet/%s", id);
+    public void adoptPet(int petId) throws ResponseException {
+        var path = String.format("/pet/%s", petId);
         var request = buildRequest("DELETE", path, null);
         var response = sendRequest(request);
         handleResponse(response, null);
     }
 
-    public void deleteAllPets() throws ResponseException {
+    public void adoptAllPets() throws ResponseException {
         var request = buildRequest("DELETE", "/pet", null);
         var response = sendRequest(request);
         handleResponse(response, null);

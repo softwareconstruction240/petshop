@@ -17,38 +17,38 @@ public class PetService {
     // Pet Shop is very simple.
     // A more complicated application would do the business logic in the service.
 
-    public Pet addPet(Pet pet) throws ResponseException {
+    public Pet rescuePet(Pet pet) throws ResponseException {
         validatePet(pet);
         if (pet.type() == PetType.DOG && pet.name().equals("fleas")) {
             throw new ResponseException(ResponseException.Code.ClientError, "Error: no dogs with fleas");
         }
 
-        Pet added = dataAccess.addPet(pet);
-        petEventObserver.petAdded(added);
-        return added;
+        Pet rescued = dataAccess.addPet(pet);
+        petEventObserver.petRescued(rescued);
+        return rescued;
     }
 
     public PetList listPets() throws ResponseException {
         return dataAccess.listPets();
     }
 
-    public Pet getPet(int id) throws ResponseException {
-        validateId(id);
-        Pet pet = dataAccess.getPet(id);
+    public Pet getPet(int petId) throws ResponseException {
+        validatePetId(petId);
+        Pet pet = dataAccess.getPet(petId);
         if (pet == null) {
-            throw new ResponseException(ResponseException.Code.NotFound, String.format("Error: pet %d not found", id));
+            throw new ResponseException(ResponseException.Code.NotFound, String.format("Error: pet %d not found", petId));
         }
         return pet;
     }
 
-    public Pet deletePet(int id) throws ResponseException {
-        Pet pet = getPet(id);
-        dataAccess.deletePet(id);
+    public Pet adoptPet(int petId) throws ResponseException {
+        Pet pet = getPet(petId);
+        dataAccess.deletePet(petId);
         petEventObserver.petAdopted(pet);
         return pet;
     }
 
-    public void deleteAllPets() throws ResponseException {
+    public void adoptAllPets() throws ResponseException {
         dataAccess.deleteAllPets();
     }
 
@@ -64,8 +64,8 @@ public class PetService {
         }
     }
 
-    private void validateId(int id) throws ResponseException {
-        if (id <= 0) {
+    private void validatePetId(int petId) throws ResponseException {
+        if (petId <= 0) {
             throw new ResponseException(ResponseException.Code.ClientError, "Error: invalid pet ID");
         }
     }

@@ -11,7 +11,7 @@ import io.javalin.http.ContentType;
 import io.javalin.http.Context;
 import io.javalin.http.HttpResponseException;
 import server.websocket.ConnectionManager;
-import server.websocket.WebSocketObserver;
+import server.websocket.WebSocketHandler;
 import service.PetService;
 
 public class PetServer {
@@ -19,7 +19,7 @@ public class PetServer {
     private static final Gson GSON = new Gson();
 
     private final PetService service;
-    private final WebSocketObserver webSocketHandler;
+    private final WebSocketHandler webSocketHandler;
     private final Javalin httpHandler;
 
     public PetServer() {
@@ -27,7 +27,7 @@ public class PetServer {
     }
 
     public PetServer(DataAccess dataAccess) {
-        webSocketHandler = new WebSocketObserver(new ConnectionManager());
+        webSocketHandler = new WebSocketHandler(new ConnectionManager());
         service = new PetService(dataAccess, webSocketHandler);
 
         httpHandler = Javalin.create(config -> config.staticFiles.add("public"))

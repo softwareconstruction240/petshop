@@ -12,11 +12,11 @@ import service.PetEventObserver;
 import webSocketMessages.Action;
 import webSocketMessages.Notification;
 
-public class WebSocketObserver implements PetEventObserver, WsConnectHandler, WsMessageHandler, WsCloseHandler {
+public class WebSocketHandler implements PetEventObserver, WsConnectHandler, WsMessageHandler, WsCloseHandler {
 
     private final ConnectionManager connections;
 
-    public WebSocketObserver(ConnectionManager connections) {
+    public WebSocketHandler(ConnectionManager connections) {
         this.connections = connections;
     }
 

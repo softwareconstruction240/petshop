@@ -22,14 +22,13 @@ public class ServerMain {
 
             var server = new PetServer(dataAccess).run(port);
             port = server.port();
-            System.out.printf("Server started on port %d with %s%n", port, dataAccess.getClass());
-            return;
+            System.out.printf("Server started on port %d with %s%n", port, dataAccess.getClass().getName());
         } catch (Throwable ex) {
-            System.out.printf("Unable to start server: %s%n", ex.getMessage());
+            System.out.printf("Unable to start server: %s%n%n", ex.getMessage());
+            System.out.println("""
+                    Pet Server:
+                    java ServerMain <port> [sql|memory]
+                    """);
         }
-        System.out.println("""
-                Pet Server:
-                java ServerMain <port> [sql]
-                """);
     }
 }

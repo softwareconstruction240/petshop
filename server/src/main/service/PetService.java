@@ -26,8 +26,9 @@ public class PetService {
             throw new ResponseException(ResponseException.Code.ClientError, "Error: no dogs with fleas");
         }
 
-        petEventObserver.makeNoise(pet);
-        return dataAccess.addPet(pet);
+        Pet added = dataAccess.addPet(pet);
+        petEventObserver.makeNoise(added);
+        return added;
     }
 
     public PetList listPets() throws ResponseException {
@@ -42,8 +43,8 @@ public class PetService {
     public void deletePet(Pet pet) throws ResponseException {
         validateId(pet.id());
 
-        petEventObserver.makeNoise(pet);
         dataAccess.deletePet(pet.id());
+        petEventObserver.makeNoise(pet);
     }
 
     public void deleteAllPets() throws ResponseException {

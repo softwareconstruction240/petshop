@@ -1,29 +1,47 @@
 package server.websocket;
 
-import org.eclipse.jetty.websocket.api.Session;
 import webSocketMessages.Notification;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Tracks which visitor is on each connection and broadcasts notifications to them.
+ * Broadcasting is best effort: a failed connection is dropped and never stops the others.
+ */
 public class ConnectionManager {
-    public final ConcurrentHashMap<Session, Session> connections = new ConcurrentHashMap<>();
+    private final Map<Connection, String> visitors = new ConcurrentHashMap<>();
 
-    public void add(Session session) {
-        connections.put(session, session);
+    public void add(Connection connection, String visitorName) {
+        visitors.put(connection, visitorName);
     }
 
-    public void remove(Session session) {
-        connections.remove(session);
+    /**
+     * @return the visitor's name, or null if the connection never entered
+     */
+    public String remove(Connection connection) {
+        return visitors.remove(connection);
     }
 
-    public void broadcast(Session excludeSession, Notification notification) throws IOException {
-        String msg = notification.toString();
-        for (Session c : connections.values()) {
-            if (c.isOpen()) {
-                if (!c.equals(excludeSession)) {
-                    c.getRemote().sendString(msg);
-                }
+    public void broadcastAll(Notification notification) {
+        broadcastAll(null, notification);
+    }
+
+    public void broadcastAll(Connection excludeConnection, Notification notification) {
+        String msg = notification.toJson();
+        for (Connection connection : visitors.keySet()) {
+            if (connection.equals(excludeConnection)) {
+                continue;
+            }
+            if (!connection.isOpen()) {
+                visitors.remove(connection);
+                continue;
+            }
+            try {
+                connection.send(msg);
+            } catch (IOException ex) {
+                visitors.remove(connection);
             }
         }
     }

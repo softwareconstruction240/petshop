@@ -7,6 +7,7 @@ import exception.ResponseException;
 import model.Pet;
 import io.javalin.Javalin;
 import io.javalin.http.Context;
+import server.websocket.ConnectionManager;
 import server.websocket.WebSocketObserver;
 import service.PetService;
 
@@ -20,7 +21,7 @@ public class PetServer {
     }
 
     public PetServer(DataAccess dataAccess) {
-        webSocketHandler = new WebSocketObserver();
+        webSocketHandler = new WebSocketObserver(new ConnectionManager());
         service = new PetService(dataAccess, webSocketHandler);
 
         httpHandler = Javalin.create(config -> config.staticFiles.add("public"))

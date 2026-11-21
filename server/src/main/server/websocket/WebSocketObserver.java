@@ -1,7 +1,6 @@
 package server.websocket;
 
 import com.google.gson.Gson;
-import exception.ResponseException;
 import io.javalin.websocket.WsCloseContext;
 import io.javalin.websocket.WsCloseHandler;
 import io.javalin.websocket.WsConnectContext;
@@ -9,16 +8,17 @@ import io.javalin.websocket.WsConnectHandler;
 import io.javalin.websocket.WsMessageContext;
 import io.javalin.websocket.WsMessageHandler;
 import model.Pet;
-import org.eclipse.jetty.websocket.api.Session;
 import server.PetEventObserver;
 import webSocketMessages.Action;
 import webSocketMessages.Notification;
 
-import java.io.IOException;
-
 public class WebSocketObserver implements PetEventObserver, WsConnectHandler, WsMessageHandler, WsCloseHandler {
 
-    private final ConnectionManager connections = new ConnectionManager();
+    private final ConnectionManager connections;
+
+    public WebSocketObserver(ConnectionManager connections) {
+        this.connections = connections;
+    }
 
     @Override
     public void handleConnect(WsConnectContext ctx) {
@@ -28,43 +28,45 @@ public class WebSocketObserver implements PetEventObserver, WsConnectHandler, Ws
 
     @Override
     public void handleMessage(WsMessageContext ctx) {
-        try {
-            Action action = new Gson().fromJson(ctx.message(), Action.class);
-            switch (action.type()) {
-                case ENTER -> enter(action.visitorName(), ctx.session);
-                case EXIT -> exit(action.visitorName(), ctx.session);
-            }
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        Action action = new Gson().fromJson(ctx.message(), Action.class);
+        var connection = new SessionConnection(ctx.session);
+        switch (action.type()) {
+            case ENTER -> enter(action.visitorName(), connection);
+            case EXIT -> leave(connection);
         }
     }
 
     @Override
     public void handleClose(WsCloseContext ctx) {
         System.out.println("Websocket closed");
+        leave(new SessionConnection(ctx.session));
     }
 
-    private void enter(String visitorName, Session session) throws IOException {
-        connections.add(session);
+    private void enter(String visitorName, Connection connection) {
+        connections.add(connection, visitorName);
         var message = String.format("%s is in the shop", visitorName);
         var notification = new Notification(Notification.Type.ARRIVAL, message);
-        connections.broadcast(session, notification);
+        connections.broadcastAll(connection, notification);
     }
 
-    private void exit(String visitorName, Session session) throws IOException {
-        var message = String.format("%s left the shop", visitorName);
-        var notification = new Notification(Notification.Type.DEPARTURE, message);
-        connections.broadcast(session, notification);
-        connections.remove(session);
-    }
-
-    public void makeNoise(Pet pet) throws ResponseException {
-        try {
-            var message = String.format("%s says %s", pet.name(), pet.sound());
-            var notification = new Notification(Notification.Type.NOISE, message);
-            connections.broadcast(null, notification);
-        } catch (Exception ex) {
-            throw new ResponseException(ResponseException.Code.ServerError, ex.getMessage());
+    /**
+     * Used by both an explicit EXIT and a dropped socket. The name comes from the
+     * recorded ENTER rather than the client, and nothing is announced for a
+     * connection that never entered or has already left.
+     */
+    private void leave(Connection connection) {
+        String visitorName = connections.remove(connection);
+        if (visitorName != null) {
+            var message = String.format("%s left the shop", visitorName);
+            var notification = new Notification(Notification.Type.DEPARTURE, message);
+            connections.broadcastAll(notification);
         }
+    }
+
+    @Override
+    public void makeNoise(Pet pet) {
+        var message = String.format("%s says %s", pet.name(), pet.sound());
+        var notification = new Notification(Notification.Type.NOISE, message);
+        connections.broadcastAll(notification);
     }
 }

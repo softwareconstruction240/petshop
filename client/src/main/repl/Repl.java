@@ -81,7 +81,7 @@ public class Repl {
 
         private String rescue(String[] params) throws ResponseException {
             Pet pet = client.rescuePet(params[0], parsePetType(params[1]));
-            return String.format("You rescued %s. Assigned ID: %d", pet.name(), pet.id());
+            return String.format("You rescued %s.", pet.name());
         }
 
         private String adopt(String[] params) throws ResponseException {
@@ -95,8 +95,10 @@ public class Repl {
                 return "No pets in the shop.";
             }
             var result = new StringBuilder();
-            for (Pet pet : pets) {
-                result.append(String.format("%4d  %-12s %s%n", pet.id(), pet.name(), pet.type()));
+            for (int i = 0; i < pets.size(); i++) {
+                Pet pet = pets.get(i);
+                result.append(String.format("%4d  %-12s %s", i + 1, pet.name(), pet.type()));
+                if (i + 1 != pets.size()) result.append("\n");
             }
             return result.toString();
         }
@@ -155,7 +157,7 @@ public class Repl {
             }
             return """
                     - list
-                    - adopt <pet id>
+                    - adopt <pet list position>
                     - rescue <name> <%s>
                     - adoptAll
                     - signOut
